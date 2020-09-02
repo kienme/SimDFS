@@ -1,0 +1,24 @@
+version: '3'
+services:
+  dn:
+    build:
+      context: .
+      dockerfile: 'Dockerfile-DN'
+    networks:
+      - network
+  mdn:
+    build:
+      context: .
+      dockerfile: 'Dockerfile-MDN'
+    networks:
+      - network
+  client:
+    build:
+      context: .
+      dockerfile: 'Dockerfile-client'
+    networks:
+      - network
+    tty: true
+    stdin_open: true  
+networks:
+    network:

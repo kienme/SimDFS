@@ -6,7 +6,7 @@ import xmlrpc.client
 
 
 # TODO: Read from config file
-MDN_LIST = ['http://simpdfs_mdn_1:2222']
+MDN_LIST = ["http://simpdfs_mdn_1:2222"]
 
 
 @click.group()
@@ -15,22 +15,22 @@ def cli():
 
 
 @cli.command()
-@click.argument('path')
-@click.argument('file')
+@click.argument("path")
+@click.argument("file")
 def get(path, file):
-    print('Starting download...')
+    print("Starting download...")
     # Just contacting the first MDN in our list
     with xmlrpc.client.ServerProxy(MDN_LIST[0]) as mdn:
         try:
             map = mdn.get_locations(path)
         except xmlrpc.client.Fault as fault:
-            print('Unable to fetch metadata. Does the file exist?')
+            print("Unable to fetch metadata. Does the file exist?")
             sys.exit(1)
         except Exception as exception:
-            print('Unable to connect to MDN.')
+            print("Unable to connect to MDN.")
             sys.exit(1)
 
-    with open(file, 'w') as f:
+    with open(file, "w") as f:
         # Each block
         for i in range(0, len(map)):
             got_block = False
@@ -44,43 +44,45 @@ def get(path, file):
                         # Successful read, no need to retreive other replicas
                         break
                 except:
-                    print('Failed to read block from ' + host + '. Trying next replica.')
+                    print(
+                        "Failed to read block from " + host + ". Trying next replica."
+                    )
             # Did not get any replica for a block
             if not got_block:
-                print('Unable to download file.')
+                print("Unable to download file.")
                 sys.exit(1)
-    
-    print('Download complete.')
+
+    print("Download complete.")
 
 
 @cli.command()
-@click.argument('file')
-@click.argument('path')
+@click.argument("file")
+@click.argument("path")
 def put(file, path):
-    print('Starting upload...')
+    print("Starting upload...")
     # Just contacting the first MDN in our list
     with xmlrpc.client.ServerProxy(MDN_LIST[0]) as mdn:
-        file_size = os.path.getsize(file)   # Bytes
+        file_size = os.path.getsize(file)  # Bytes
         try:
             map = mdn.get_locations_new(path, file_size)
         except xmlrpc.client.Fault as fault:
-            print('Unable to fetch metadata. Does the file exist?')
+            print("Unable to fetch metadata. Does the file exist?")
             sys.exit(1)
         except Exception as exception:
-            print('Unable to connect to MDN.')
+            print("Unable to connect to MDN.")
             sys.exit(1)
-    
+
     # Open file, and send blocks to hosts described by map
     # Scope for optimization, we might be connecting to the same host multiple times
     # Trade off b/w network connection and file access times
     # Can parallelize
-    with open(file, 'r') as f:
-        for i in range(0, len(map['map'])):
+    with open(file, "r") as f:
+        for i in range(0, len(map["map"])):
             # MDN gives the block size
-            block = f.read(map['block_size'])
+            block = f.read(map["block_size"])
             # Send this to all replicas
             put_block = False
-            for host in map['map'][i]:
+            for host in map["map"][i]:
                 # Connect to dn
                 with xmlrpc.client.ServerProxy(host) as dn:
                     # Such indentation Very complexity Wow
@@ -88,13 +90,12 @@ def put(file, path):
                         dn.put_block(path, i, block)
                         put_block = True
                     except Exception as exception:
-                        print('Unable to write to ' + host + '. Skipping.')
+                        print("Unable to write to " + host + ". Skipping.")
             if not put_block:
-                print('Unable to upload. Aborting.')
+                print("Unable to upload. Aborting.")
                 sys.exit(1)
 
-    print('Upload complete.')
-                    
+    print("Upload complete.")
 
 
 def main():

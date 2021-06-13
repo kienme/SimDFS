@@ -1,4 +1,4 @@
-# SimpDFS
+# SimDFS
 
 > Simple Distributed File System 
 
